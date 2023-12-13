@@ -1,0 +1,76 @@
+this is api.py 
+import frappe
+from frappe.utils import validate_email_address, split_emails
+
+
+@frappe.whitelist(allow_guest=True)
+def oauth_providers():
+    from frappe.utils.html_utils import get_icon_html
+    from frappe.utils.password import get_decrypted_password
+    from frappe.utils.oauth import get_oauth2_authorize_url, get_oauth_keys
+
+    out = []
+    providers = frappe.get_all(
+        "Social Login Key",
+        filters={"enable_social_login": 1},
+        fields=["name", "client_id", "base_url", "provider_name", "icon"],
+        order_by="name",
+    )
+
+    for provider in providers:
+        client_secret = get_decrypted_password("Social Login Key", provider.name, "client_secret")
+        if not client_secret:
+            continue
+
+        icon = None
+        if provider.icon:
+            if provider.provider_name == "Custom":
+                icon = get_icon_html(provider.icon, small=True)
+            else:
+                icon = f"<img src='{provider.icon}' alt={provider.provider_name}>"
+
+        if provider.client_id and provider.base_url and get_oauth_keys(provider.name):
+            out.append(
+                {
+                    "name": provider.name,
+                    "provider_name": provider.provider_name,
+                    "auth_url": get_oauth2_authorize_url(provider.name, "/drive/home"),
+                    "icon": icon,
+                }
+            )
+    return out
+ChatGPT
+
+The api.py file appears to define an API endpoint related to OAuth providers for social login. Here's a breakdown of the key components:
+
+    Endpoint Function (oauth_providers):
+        This function is decorated with @frappe.whitelist(allow_guest=True), which means it can be accessed by guest users (users who are not logged in).
+        It retrieves a list of social login providers that are enabled (enable_social_login: 1) from the "Social Login Key" DocType.
+        For each provider, it gets the relevant information such as client ID, base URL, provider name, and icon.
+        It checks if the client secret for the provider is available.
+        If all necessary information is available, it constructs a dictionary for the provider and appends it to the out list.
+
+    Provider Information:
+        For each provider, the information includes:
+            name: The name of the social login key.
+            provider_name: The name of the provider.
+            auth_url: The OAuth2 authorization URL constructed using get_oauth2_authorize_url. The redirection URL is set to "/drive/home."
+            icon: An icon associated with the provider, either a custom icon or an image.
+
+    Response:
+        The response is a list of dictionaries, each representing a social login provider.
+
+Example response for a provider:
+
+python
+
+{
+    "name": "provider_key",
+    "provider_name": "Provider Name",
+    "auth_url": "https://example.com/oauth2/authorize?...",
+    "icon": "<img src='provider_icon_url' alt='Provider Name'>"
+}
+
+This API endpoint seems to be designed to provide information about available OAuth providers for social login. Users can then use the provided information to initiate the authentication flow with the chosen provider.
+
+If you have specific questions or if there's anything else you'd like assistance with, feel free to ask!

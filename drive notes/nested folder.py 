@@ -1,0 +1,62 @@
+The provided Python code is a part of a Frappe application and appears to be a module for handling nested folders in a file or document management system. Let's break down the code and understand its functionality:
+
+    Import Statements:
+
+    python
+
+import frappe
+import os
+from frappe.utils.nestedset import rebuild_tree, get_ancestors_of
+from pypika import Order, functions as fn
+from pathlib import Path
+from werkzeug.wrappers import Response
+from werkzeug.wsgi import wrap_file
+from werkzeug.utils import secure_filename
+import uuid
+import mimetypes
+import hashlib
+import json
+from drive.utils.files import get_user_directory, create_user_directory, get_new_title
+from drive.locks.distributed_lock import DistributedLock
+from datetime import date, timedelta
+
+    The code includes various library imports, such as Frappe, os, pypika, pathlib, werkzeug, uuid, mimetypes, hashlib, json, and custom modules (drive.utils.files and drive.locks.distributed_lock).
+    These libraries are used for handling file operations, building queries, managing file paths, handling HTTP responses, generating secure filenames, working with UUIDs, MIME types, hashing, and handling distributed locks.
+
+get_children_count Function:
+
+python
+
+@frappe.whitelist()
+def get_children_count(drive_entity):
+    children_count = frappe.db.count("Drive Entity", {"parent_drive_entity": drive_entity})
+    return children_count
+
+    This function returns the count of children for a specified Drive Entity.
+    It uses Frappe's frappe.db.count to count the children of the specified entity.
+    Decorated with @frappe.whitelist() to make it accessible via the Frappe API.
+
+folder_contents Function:
+
+python
+
+    @frappe.whitelist()
+    def folder_contents(entity_name=None, order_by="modified", is_active=1):
+        # ... (function documentation)
+        try:
+            entity_name = entity_name or get_user_directory().name
+        except FileNotFoundError:
+            return []
+        # ... (folder validation, permission checks)
+        # ... (query construction using pypika)
+        result = query.run(as_dict=True)
+        return result
+
+        This function returns a list of DriveEntity records present in a specified folder.
+        It has parameters for the folder's document name (entity_name), sorting order (order_by), and an active filter (is_active).
+        It first tries to get the user's directory and defaults to an empty list if not found.
+        Validates whether the specified entity is a folder, is active, and the user has permission to access it.
+        Uses the Pypika library to construct a complex SQL-like query for fetching folder contents.
+        The result is a list of DriveEntity records returned as dictionaries.
+
+The code seems to be part of a larger file or document management system implemented using the Frappe framework. It handles tasks related to nested folders, such as getting the count of children for a folder and retrieving the contents of a folder. The use of the Pypika library indicates a dynamic query building approach, and the @frappe.whitelist() decorator makes these functions accessible via the Frappe API.

@@ -1,0 +1,148 @@
+The provided Python code is a part of a Frappe application and appears to be a module related to handling permissions for a file or document management system. Let's break down the code and understand its functionality:
+
+    Import Statements:
+
+    python
+
+import frappe
+from pypika import Order, Query, Table, Field, functions as fn
+from frappe.utils.nestedset import rebuild_tree, get_ancestors_of
+from drive.api.files import get_entity
+from drive.api.files import get_doc_content
+from drive.utils.files import get_user_directory
+from drive.utils.user_group import get_entity_shared_with_user_groups
+from drive.utils.users import mark_as_viewed
+
+    The code includes various library imports, such as Frappe, Pypika, and custom modules (drive.api.files, drive.utils.files, drive.utils.user_group, drive.utils.users).
+    These libraries are used for handling database queries, nested set operations, file-related operations, user permissions, and file content retrieval.
+
+get_shared_with_list Function:
+
+python
+
+@frappe.whitelist()
+def get_shared_with_list(entity_name):
+    # ... (function documentation)
+    if not frappe.has_permission(
+        doctype="Drive Entity", doc=entity_name, ptype="write", user=frappe.session.user
+    ):
+        raise frappe.PermissionError
+    # ... (query to retrieve list of users with whom the file or folder is shared)
+    return {"owner": entity_owner_info, "users": users}
+
+    This function retrieves a list of users with whom a file or folder has been shared.
+    It checks if the current user has write permission on the specified entity, raising a PermissionError if not.
+    The function constructs a query to fetch information about users who have access to the file or folder.
+
+get_shared_user_group_list Function:
+
+python
+
+@frappe.whitelist()
+def get_shared_user_group_list(entity_name):
+    # ... (function documentation)
+    user_group_list = frappe.db.get_list(
+        "Drive DocShare",
+        filters={
+            "share_doctype": "Drive Entity",
+            "user_doctype": "User Group",
+            "share_name": ["like", f"%{entity_name}%"],
+        },
+        fields=["user_name", "user_doctype", "read", "write"],
+    )
+    return user_group_list
+
+    This function retrieves a list of user groups with whom a file or folder has been shared.
+
+get_shared_by_me Function:
+
+python
+
+@frappe.whitelist()
+def get_shared_by_me(get_all=False, order_by="modified"):
+    # ... (function documentation)
+    # ... (query construction using Pypika to get files and folders shared with the current user)
+    return filter(lambda x: x.parent_drive_entity not in names, result)
+
+    This function retrieves a list of files and folders shared with the current user.
+    It uses Pypika to construct a complex query to fetch shared entities and their permissions.
+    The function has an option to retrieve all shared entities (get_all=True).
+
+get_shared_with_me Function:
+
+python
+
+@frappe.whitelist()
+def get_shared_with_me(get_all=False, order_by="modified"):
+    # ... (function documentation)
+    # ... (query construction using Pypika to get files and folders shared with the current user)
+    return filter(lambda x: x.parent_drive_entity not in names and x.owner != frappe.session.user, result)
+
+    This function retrieves a list of files and folders shared with the current user.
+    It uses Pypika to construct a complex query to fetch shared entities and their permissions.
+    The function has an option to retrieve all shared entities (get_all=True).
+
+get_all_my_entities Function:
+
+python
+
+@frappe.whitelist()
+def get_all_my_entities(fields=None):
+    # ... (function documentation)
+    # ... (query construction to get a list of entities owned or shared with the current user)
+    return list({x["name"]: x for x in all_entities}.values())
+
+    This function retrieves a list of all entities owned or shared with the current user.
+    It combines the entities owned by the user and those shared with the user.
+
+get_entity_with_permissions Function:
+
+python
+
+@frappe.whitelist(allow_guest=True)
+def get_entity_with_permissions(entity_name):
+    # ... (function documentation)
+    # ... (query to retrieve file data with permissions using Pypika)
+    return entity | user_access
+
+    This function retrieves file data with permissions for a specified entity.
+    It checks permissions and fetches file data and content if applicable.
+
+get_general_access Function:
+
+python
+
+@frappe.whitelist()
+def get_general_access(entity_name):
+    # ... (function documentation)
+    # ... (query to retrieve general access permissions for the given entity)
+    return query.run(as_dict=True)
+
+    This function retrieves general access permissions for the given entity (read, write).
+
+get_user_access Function:
+
+python
+
+    @frappe.whitelist()
+    def get_user_access(entity_name):
+        # ... (function documentation)
+        # ... (query to retrieve user-specific access permissions for the given entity)
+        return user_access
+
+        This function retrieves user-specific access permissions for the given entity.
+        It considers user-specific, group-specific, everyone, and public access.
+
+    user_group_entity_access Function:
+
+python
+
+def user_group_entity_access(entity_name=None):
+    # ... (function documentation)
+    # ... (query to get user group access level for the current user and current entity)
+    return {"read": max_read, "write": max_write} or False
+
+    This function gets user group access levels for the current user and current entity.
+    It returns access levels for read and write permissions.
+
+The code seems to be part of a larger file or document management system implemented using the Frappe framework. It focuses on handling permissions, user access, and retrieving information about files and folders shared within the system. The use of Pypika suggests a dynamic query-building approach, and the @frappe.whitelist() decorator makes these functions accessible via the Frappe API.

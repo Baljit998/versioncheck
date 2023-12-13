@@ -1,0 +1,98 @@
+{
+  "actions": [],
+  "autoname": "hash",
+  "creation": "2023-10-19 12:16:14.883030",
+  "default_view": "List",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": ["instance_id", "org_name", "instance_email"],
+  "fields": [
+    {
+      "default": "placeholder_name",
+      "fieldname": "org_name",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Organization Name",
+      "reqd": 1
+    },
+    {
+      "fieldname": "instance_id",
+      "fieldtype": "Data",
+      "label": "Instance ID"
+    },
+    {
+      "fieldname": "instance_email",
+      "fieldtype": "Data",
+      "label": "Instance Email"
+    }
+  ],
+  "issingle": 1,
+  "links": [],
+  "modified": "2023-10-23 03:56:30.925102",
+  "modified_by": "Administrator",
+  "module": "Drive",
+  "name": "Drive Instance Settings",
+  "naming_rule": "Random",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "print": 1,
+      "read": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "print": 1,
+      "read": 1,
+      "role": "Drive Admin",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "email": 1,
+      "print": 1,
+      "read": 1,
+      "role": "Drive User",
+      "share": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": []
+}
+The provided JSON configuration represents the metadata for a DocType in Frappe, specifically for a "Drive Instance Settings" document type. Here's a breakdown of the key components and properties defined in this configuration:
+
+1. **Basic Information:**
+   - **name:** "Drive Instance Settings"
+   - **module:** "Drive"
+   - **owner:** "Administrator"
+   - **creation:** Date and time of creation
+   - **modified:** Date and time of the last modification
+   - **modified_by:** "Administrator"
+   - **autoname:** "Random"
+   - **sort_field:** "modified"
+   - **sort_order:** "DESC"
+
+2. **Fields:**
+   - **org_name:** Data field representing the Organization Name. It has a default value of "placeholder_name" and is required.
+   - **instance_id:** Data field representing the Instance ID.
+   - **instance_email:** Data field representing the Instance Email.
+
+3. **Permissions:**
+   - Three sets of permissions are defined for roles "System Manager," "Drive Admin," and "Drive User," allowing them various levels of access, including create, delete, email, print, read, share, and write on "Drive Instance Settings" documents.
+
+4. **Actions, Links, and States:**
+   - Actions, links, and states are not defined in this configuration.
+
+5. **Issingle:**
+   - The "issingle" attribute is set to 1, indicating that only a single instance of this document type is allowed.
+
+This configuration defines how instances of "Drive Instance Settings" documents are structured in the "Drive" module, specifying settings related to a Drive instance. If you have any specific questions or if there's anything else you'd like to understand, feel free to ask!

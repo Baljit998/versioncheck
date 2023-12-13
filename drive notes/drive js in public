@@ -1,0 +1,30 @@
+The drive.js script in the public js folder appears to be a JavaScript code snippet that is executed when the document is ready. Let's break down the code:
+
+javascript
+
+$(function () {
+  if (
+    location.pathname == "/login" &&
+    !location.search &&
+    !localStorage.getItem("session_last_route")
+  ) {
+    const url = new URL(window.location);
+    url.searchParams.set("redirect-to", "/drive/home");
+    window.history.pushState({}, "", url);
+  }
+});
+
+Explanation:
+
+    $(function () { ... }): This is a shorthand for the jQuery document ready function. It ensures that the enclosed code is executed when the DOM is fully loaded.
+
+    if (location.pathname == "/login" && !location.search && !localStorage.getItem("session_last_route")) { ... }: This condition checks if the current URL path is "/login," there is no query string, and there is no "session_last_route" item in the local storage.
+
+    If the condition is true:
+        const url = new URL(window.location);: Creates a new URL object based on the current window location.
+        url.searchParams.set("redirect-to", "/drive/home");: Sets the "redirect-to" parameter in the query string to "/drive/home."
+        window.history.pushState({}, "", url);: Updates the browser history by pushing a new state with the modified URL, effectively changing the URL without triggering a full page reload.
+
+Overall Purpose:
+
+The purpose of this script seems to be redirecting the user from the login page to the "/drive/home" page if certain conditions are met. It ensures a smooth transition to the drive's home page after successful login or if the user manually navigates to the login page. The use of localStorage suggests that it may be used to persistently store the last route visited, preventing repeated redirections.

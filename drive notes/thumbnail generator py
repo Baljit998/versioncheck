@@ -1,0 +1,48 @@
+The provided Python code seems to be part of a Frappe module for generating thumbnails for images and videos associated with entities in a file or document management system. Let's break down the code and understand its functionality:
+create_image_thumbnail Function:
+
+python
+
+@frappe.whitelist(allow_guest=True)
+def create_image_thumbnail(entity_name):
+    # ... (function documentation)
+    # ... (retrieving information about the Drive Entity)
+    # ... (checking permissions for viewing the file)
+    # ... (acquiring a distributed lock for the entity's path)
+
+    if frappe.cache().exists(entity_name):
+        # ... (if the thumbnail is cached, retrieve and return it)
+    else:
+        # ... (if the thumbnail is not cached, read it from file)
+        # ... (wrap the thumbnail data in a Response object)
+        # ... (set Content-Type and Content-Disposition headers)
+        # ... (cache the thumbnail data for future use)
+
+    return response
+
+    This function generates thumbnails for image files associated with a specified entity.
+    It checks if the thumbnail is already cached in the Frappe cache and returns it if found.
+    If the thumbnail is not cached, it reads the thumbnail data from a file and creates a Response object.
+    The generated thumbnail data is cached for subsequent requests.
+
+create_video_thumbnail Function:
+
+python
+
+@frappe.whitelist(allow_guest=True)
+def create_video_thumbnail(entity_name):
+    # ... (function documentation)
+    # ... (similar structure to create_image_thumbnail)
+
+    This function is similar to create_image_thumbnail but is intended for generating thumbnails for video files.
+
+Overview:
+
+    The functions use Frappe's whitelist decorator to allow guest access.
+    They retrieve information about the Drive Entity associated with the provided entity_name.
+    Permissions are checked to ensure that the user has the right to view the specified file.
+    Distributed locks are used to handle concurrent requests and ensure safe access to the entity's path.
+    Thumbnails are either retrieved from the cache or read from a file.
+    The thumbnail data is wrapped in a Response object with appropriate headers and returned.
+
+Overall, these functions provide a mechanism for generating and serving thumbnails for images and videos associated with entities in a file or document management system. They handle caching to optimize performance and utilize Frappe's framework for interacting with documents and distributed locks.

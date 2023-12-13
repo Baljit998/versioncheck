@@ -1,0 +1,82 @@
+{
+  "actions": [],
+  "allow_rename": 1,
+  "creation": "2023-03-08 23:56:05.264166",
+  "default_view": "List",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": ["title", "color"],
+  "fields": [
+    {
+      "fieldname": "title",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Title",
+      "reqd": 1
+    },
+    {
+      "fieldname": "color",
+      "fieldtype": "Data",
+      "label": "Color"
+    }
+  ],
+  "links": [],
+  "modified": "2023-08-23 17:37:06.183457",
+  "modified_by": "Administrator",
+  "module": "Drive",
+  "name": "Drive Tag",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "export": 1,
+      "read": 1,
+      "role": "Drive User",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "export": 1,
+      "read": 1,
+      "role": "Drive Admin",
+      "share": 1,
+      "write": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": []
+}
+The provided JSON configuration represents the metadata for a DocType in Frappe, specifically for a "Drive Tag" document type. Here's a breakdown of the key components and properties defined in this configuration:
+
+1. **Basic Information:**
+   - **name:** "Drive Tag"
+   - **module:** "Drive"
+   - **owner:** "Administrator"
+   - **creation:** Date and time of creation
+   - **modified:** Date and time of the last modification
+   - **modified_by:** "Administrator"
+   - **autoname:** Default (Autoincrement)
+   - **sort_field:** "modified"
+   - **sort_order:** "DESC"
+   - **default_view:** "List"
+   - **allow_rename:** 1 (Tags can be renamed)
+
+2. **Fields:**
+   - **title:** Data field representing the title of the tag. It is required and visible in the list view.
+   - **color:** Data field representing the color associated with the tag.
+
+3. **Permissions:**
+   - Two sets of permissions are defined for roles "Drive User" and "Drive Admin," allowing them various levels of access, including create, delete, export, read, share, and write on "Drive Tag" documents.
+
+4. **Actions, Links, and States:**
+   - Actions, links, and states are not defined in this configuration.
+
+5. **Issingle:**
+   - The "issingle" attribute is not specified, implying that multiple instances of this document type are allowed.
+
+This configuration defines how instances of "Drive Tag" documents are structured in the "Drive" module, representing tags that can be associated with Drive entities. If you have any specific questions or if there's anything else you'd like to understand, feel free to ask!

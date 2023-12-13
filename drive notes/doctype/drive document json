@@ -1,0 +1,95 @@
+this is drive document.json
+{
+  "actions": [],
+  "allow_rename": 1,
+  "autoname": "hash",
+  "creation": "2023-04-05 11:32:23.940763",
+  "default_view": "List",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": ["title", "content"],
+  "fields": [
+    {
+      "fieldname": "title",
+      "fieldtype": "Text",
+      "in_list_view": 1,
+      "label": "Title",
+      "reqd": 1
+    },
+    {
+      "default": "AAA=",
+      "fieldname": "content",
+      "fieldtype": "Long Text",
+      "label": "Content"
+    }
+  ],
+  "links": [],
+  "modified": "2023-08-23 17:36:52.650920",
+  "modified_by": "Administrator",
+  "module": "Drive",
+  "name": "Drive Document",
+  "naming_rule": "Random",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "export": 1,
+      "read": 1,
+      "role": "Drive User",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "export": 1,
+      "read": 1,
+      "role": "Drive Admin",
+      "share": 1,
+      "write": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": []
+}
+ChatGPT
+
+The provided JSON represents the DocType definition for a document type named "Drive Document." Below is a breakdown of its key components:
+
+    DocType Information:
+        name: "Drive Document"
+        module: "Drive"
+        creation: Date and time of creation
+        modified: Date and time of the last modification
+        modified_by: User who last modified the DocType
+        autoname: "hash" - Indicates the method used for generating the document's name automatically
+        naming_rule: "Random" - Indicates the rule used for naming documents automatically
+        default_view: "List" - Specifies the default view for this DocType
+
+    Fields:
+        Two fields are defined:
+            title (Text): Represents the title of the document. It is required and visible in the list view.
+            content (Long Text): Represents the content of the document. It has a default value of "AAA=".
+
+    Permissions:
+        Two sets of permissions are defined for roles "Drive User" and "Drive Admin":
+            Both roles have permissions for create, delete, export, read, share, and write operations.
+
+    Other Attributes:
+        allow_rename: Allows renaming of documents.
+        editable_grid: Indicates that the document allows editing in a grid view.
+        field_order: Specifies the order of fields in the document.
+
+    Database and Sorting:
+        engine: Specifies the database engine used (InnoDB).
+        sort_field: "modified" - Specifies the field used for sorting (by modification date).
+        sort_order: "DESC" - Specifies the sorting order (descending).
+
+    Actions and States:
+        actions: No custom actions are defined.
+        states: No workflow states are defined for this DocType.
+
+This DocType seems to represent a basic document with a title and content. It is part of the "Drive" module and comes with default permissions for user and admin roles in a typical document management system.

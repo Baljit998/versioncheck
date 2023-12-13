@@ -1,0 +1,27 @@
+The desktop.py file in the config folder defines the module information for the "Drive" module in the Frappe framework. Below is a breakdown of its content:
+
+python
+
+from frappe import _
+
+
+def get_data():
+    return [
+        {
+            "module_name": "Drive",
+            "color": "grey",
+            "icon": "octicon octicon-file-directory",
+            "type": "module",
+            "label": _("Drive"),
+        }
+    ]
+
+This file provides data about the "Drive" module that is displayed in the Frappe Desk (desktop). Here's a breakdown of the key fields:
+
+    module_name: The unique identifier for the module. In this case, it is "Drive."
+    color: The color associated with the module. In this case, it is "grey."
+    icon: The icon representing the module. Here, it uses the Octicon icon for a file directory.
+    type: Specifies the type of the module. In this case, it is "module."
+    label: The label or display name for the module. It is set to _("Drive"), indicating that it is a translatable string.
+
+This configuration will ensure that a "Drive" module is displayed in the Frappe Desk with the specified color, icon, and label. Users can click on this module to access functionalities related to the "Drive" module within the Frappe application.

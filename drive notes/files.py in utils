@@ -1,0 +1,112 @@
+The provided Python script, named files.py, is part of the Frappe Drive application and contains functions related to file and directory operations. Let's break down the code:
+create_user_directory Function:
+
+python
+
+def create_user_directory():
+    # ... (omitted comments for brevity)
+
+    # Create user directory on disk
+    user_directory_name = _get_user_directory_name()
+    user_directory_path = Path(frappe.get_site_path("private/files"), user_directory_name)
+    user_directory_path.mkdir(exist_ok=True)
+
+    # Create corresponding DriveEntity document
+    full_name = frappe.get_value("User", frappe.session.user, "full_name")
+    user_directory = frappe.get_doc(
+        {
+            "doctype": "Drive Entity",
+            "name": user_directory_name,
+            "title": f"{full_name}'s Drive",
+            "is_group": 1,
+            "path": user_directory_path,
+        }
+    )
+
+    # Update user roles and commit changes
+    user_directory.flags.file_created = True
+    user = frappe.get_doc("User", frappe.session.user)
+    user.flags.ignore_permlevel_for_fields = ["roles"]
+    user.add_roles("Drive User")
+    user.save(ignore_permissions=True)
+
+    # Insert the DriveEntity document
+    user_directory.insert()
+    
+    # Return dictionary containing the document-name and path
+    return frappe._dict({"name": user_directory.name, "path": user_directory.path})
+
+get_user_directory Function:
+
+python
+
+def get_user_directory(user=None):
+    # ... (omitted comments for brevity)
+
+    # Return dictionary containing the document-name and path
+    return user_directory
+
+_get_user_directory_name Function:
+
+python
+
+def _get_user_directory_name(user=None):
+    """Returns user directory name from user's unique id"""
+    if not user:
+        user = frappe.session.user
+    return hashlib.md5(user.encode("utf-8")).hexdigest()
+
+get_new_title Function:
+
+python
+
+@frappe.whitelist()
+def get_new_title(entity, parent_name):
+    # ... (omitted comments for brevity)
+
+    # Returns new title for an entity if the same title exists for another entity at the same level
+    return new_title
+
+create_user_thumbnails_directory Function:
+
+python
+
+def create_user_thumbnails_directory():
+    # ... (omitted comments for brevity)
+
+    # Create and return the path of the user's thumbnails directory
+    return user_directory_thumnails_path
+
+get_user_thumbnails_directory Function:
+
+python
+
+def get_user_thumbnails_directory(user=None):
+    # ... (omitted comments for brevity)
+
+    # Return the path of the user's thumbnails directory
+    return user_directory_thumnails_path
+
+create_thumbnail Function:
+
+python
+
+def create_thumbnail(entity_name, path, mime_type):
+    # ... (omitted comments for brevity)
+
+    # Create thumbnail for the entity based on its mime type (image or video)
+    # Retry logic is implemented in case of failures
+
+    # Note: The actual creation of thumbnails involves handling both image and video types
+
+Explanation:
+
+    The script primarily deals with creating user directories, managing file titles, creating and retrieving thumbnails, and handling various file-related operations within the context of the Frappe Drive application.
+    Functions like create_user_directory and get_user_directory deal with user-specific directories.
+    The _get_user_directory_name function generates a unique directory name based on the user's ID.
+    get_new_title is used to generate a new title for an entity if a similar title already exists.
+    Functions like create_user_thumbnails_directory and get_user_thumbnails_directory deal with user-specific thumbnail directories.
+    create_thumbnail is responsible for creating thumbnails for both image and video files, including retry logic in case of failures.
+
+It's important to note that this script interacts with the Frappe framework and its ORM (Object-Relational Mapping) for database operations, making it an integral part of the Frappe Drive application's functionality.
+

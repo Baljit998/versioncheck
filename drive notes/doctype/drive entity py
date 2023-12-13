@@ -1,0 +1,567 @@
+this is drive entity.py 
+import frappe
+from frappe.utils.nestedset import NestedSet, get_ancestors_of
+from pathlib import Path
+import shutil
+import uuid
+from drive.utils.files import (
+    get_user_directory,
+    create_user_directory,
+    get_new_title,
+    get_user_thumbnails_directory,
+    create_user_thumbnails_directory,
+    create_thumbnail,
+)
+from drive.utils.user_group import add_new_user_group_docshare, does_exist_user_group_docshare
+from frappe.utils import cint
+
+
+class DriveEntity(NestedSet):
+    nsm_parent_field = "parent_drive_entity"
+    nsm_oldparent_field = "old_parent"
+
+    def on_update(self):
+        super().on_update()
+
+    def before_save(self):
+        self.version = self.version + 1
+
+    def after_insert(self):
+        self.inherit_permissions()
+
+    def on_trash(self):
+        frappe.db.delete("Drive Favourite", {"entity": self.name})
+        frappe.db.delete("Drive Entity Log", {"entity_name": self.name})
+        frappe.db.delete("Drive DocShare", {"share_name": self.name})
+        if self.is_group:
+            for child in self.get_children():
+                has_write_access = frappe.has_permission(
+                    doctype="Drive Entity",
+                    doc=self,
+                    ptype="write",
+                    user=frappe.session.user,
+                )
+                child.delete(ignore_permissions=has_write_access)
+            super().on_trash()
+
+    def after_delete(self):
+        if self.document:
+            frappe.delete_doc("Drive Document", self.document)
+        """Remove file once document is deleted"""
+        if self.path:
+            max_attempts = 3
+            for attempt in range(max_attempts):
+                try:
+                    Path(self.path).unlink()
+                    break
+                except Exception as e:
+                    print(f"Attempt {attempt + 1}: Failed to delete file - {e}")
+        if self.mime_type:
+            if self.mime_type.startswith("image") or self.mime_type.startswith("video"):
+                max_attempts = 3
+                for attempt in range(max_attempts):
+                    try:
+                        user_thumbnails_directory = get_user_thumbnails_directory()
+                        thumbnail_getpath = Path(user_thumbnails_directory, self.name)
+                        Path(str(thumbnail_getpath) + ".thumbnail").unlink()
+                        break
+                    except Exception as e:
+                        print(f"Attempt {attempt + 1}: Failed to delete thumbnail - {e}")
+
+    def on_rollback(self):
+        if self.flags.file_created:
+            shutil.rmtree(self.path) if self.is_group else self.path.unlink()
+
+    def inherit_permissions(self):
+        """Copy parent permissions to new child entity"""
+
+        if self.parent_drive_entity is None:
+            return
+
+        permissions = frappe.get_all(
+            "Drive DocShare",
+            fields=[
+                "name",
+                "user_doctype",
+                "user_name",
+                "read",
+                "write",
+                "share",
+                "everyone",
+                "public",
+                "owner",
+                "creation",
+            ],
+            filters=dict(share_doctype=self.doctype, share_name=self.parent_drive_entity),
+        )
+        parent_folder = frappe.db.get_value(
+            "Drive Entity", self.parent_drive_entity, ["name", "owner"], as_dict=1
+        )
+        if parent_folder.owner != frappe.session.user:
+            # Allow the owner of the folder to access the entity
+            # Defaults to write since its obvious that the current user has write access to the parent
+            # the subsequent for loop still creates a docShare for this uploaded entity as a side effect
+            # It just lingers around and is wiped on delete (find a way to avoid the side effect if possible)
+            self.share(
+                share_name=self.name,
+                user=parent_folder.owner,
+                user_type="User",
+                read=1,
+                write=1,
+                share=1,
+                notify=0,
+            )
+
+        for permission in permissions:
+            self.share(
+                share_name=self.name,
+                user=permission.user_name,
+                user_type=permission.user_doctype,
+                read=permission.read,
+                write=permission.write,
+                share=permission.share,
+                everyone=permission.everyone,
+                public=permission.public,
+                notify=0,
+            )
+
+    @frappe.whitelist()
+    def move(self, new_parent=None):
+        """
+        Move file or folder to the new parent folder
+
+        :param new_parent: Document-name of the new parent folder. Defaults to the user directory
+        :raises NotADirectoryError: If the new_parent is not a folder, or does not exist
+        :raises FileExistsError: If a file or folder with the same name already exists in the specified parent folder
+        :return: DriveEntity doc once file is moved
+        """
+
+        new_parent = new_parent or get_user_directory(self.owner).name
+        if new_parent == self.parent_drive_entity:
+            return self
+
+        is_group = frappe.db.get_value("Drive Entity", new_parent, "is_group")
+        if not is_group:
+            raise NotADirectoryError()
+        self.parent_drive_entity = new_parent
+        title = get_new_title(self.title, new_parent)
+        if title != self.title:
+            self.rename(title)
+        self.inherit_permissions()
+        self.save()
+        return self
+
+    @frappe.whitelist()
+    def copy(self, new_parent=None, parent_user_directory=None):
+        """
+        Copy file or folder along with its contents to the new parent folder
+
+        :param new_parent: Document-name of the new parent folder. Defaults to the user directory
+        :raises NotADirectoryError: If the new_parent is not a folder, or does not exist
+        :raises FileExistsError: If a file or folder with the same name already exists in the specified parent folder
+        """
+
+        title = self.title
+
+        if not parent_user_directory:
+            parent_owner = (
+                frappe.db.get_value("Drive Entity", new_parent, "owner")
+                if new_parent
+                else frappe.session.user
+            )
+            try:
+                parent_user_directory = get_user_directory(parent_owner)
+            except FileNotFoundError:
+                parent_user_directory = create_user_directory()
+            new_parent = new_parent or parent_user_directory.name
+            parent_is_group = frappe.db.get_value("Drive Entity", new_parent, "is_group")
+            if not parent_is_group:
+                raise NotADirectoryError()
+            if not frappe.has_permission(
+                doctype="Drive Entity",
+                doc=new_parent,
+                ptype="write",
+                user=frappe.session.user,
+            ):
+                frappe.throw(
+                    "Cannot paste to this folder due to insufficient permissions",
+                    frappe.PermissionError,
+                )
+            if self.name == new_parent or self.name in get_ancestors_of(
+                "Drive Entity", new_parent
+            ):
+                frappe.throw("You cannot copy a folder into itself")
+
+            title = get_new_title(title, new_parent)
+
+        name = uuid.uuid4().hex
+
+        if self.is_group:
+            drive_entity = frappe.get_doc(
+                {
+                    "doctype": "Drive Entity",
+                    "name": name,
+                    "title": title,
+                    "is_group": 1,
+                    "parent_drive_entity": new_parent,
+                    "color": self.color,
+                }
+            )
+            drive_entity.insert()
+
+            for child in self.get_children():
+                child.copy(name, parent_user_directory)
+
+        elif self.document is not None:
+            drive_doc_content = frappe.db.get_value("Drive Document", self.document, "content")
+
+            new_drive_doc = frappe.new_doc("Drive Document")
+            new_drive_doc.title = title
+            new_drive_doc.content = drive_doc_content
+            new_drive_doc.save()
+
+            drive_entity = frappe.get_doc(
+                {
+                    "doctype": "Drive Entity",
+                    "name": name,
+                    "title": title,
+                    "mime_type": self.mime_type,
+                    "parent_drive_entity": new_parent,
+                    "document": new_drive_doc,
+                }
+            )
+            drive_entity.insert()
+
+        else:
+            save_path = Path(parent_user_directory.path) / f"{new_parent}_{title}"
+            if save_path.exists():
+                frappe.throw(f"File '{title}' already exists", FileExistsError)
+
+            shutil.copy(self.path, save_path)
+
+            path = save_path.parent / f"{name}{save_path.suffix}"
+            save_path.rename(path)
+            drive_entity = frappe.get_doc(
+                {
+                    "doctype": "Drive Entity",
+                    "name": name,
+                    "title": title,
+                    "parent_drive_entity": new_parent,
+                    "path": path,
+                    "file_size": self.file_size,
+                    "file_ext": self.file_ext,
+                    "mime_type": self.mime_type,
+                }
+            )
+            drive_entity.flags.file_created = True
+            drive_entity.insert()
+
+        if new_parent == parent_user_directory.name:
+            drive_entity.share(frappe.session.user, write=1, share=1)
+
+        if drive_entity.mime_type:
+            if drive_entity.mime_type.startswith("image") or drive_entity.mime_type.startswith(
+                "video"
+            ):
+                frappe.enqueue(
+                    create_thumbnail,
+                    queue="default",
+                    timeout=None,
+                    now=True,
+                    # will set to false once reactivity in new UI is solved
+                    entity_name=name,
+                    path=path,
+                    mime_type=drive_entity.mime_type,
+                )
+
+    @frappe.whitelist()
+    def rename(self, new_title):
+        """
+        Rename file or folder
+
+        :param new_title: New file or folder name
+        :raises FileExistsError: If a file or folder with the same name already exists in the parent folder
+        :return: DriveEntity doc once it's renamed
+        """
+
+        if new_title == self.title:
+            return self
+
+        entity_exists = frappe.db.exists(
+            {
+                "doctype": "Drive Entity",
+                "parent_drive_entity": self.parent_drive_entity,
+                "title": new_title,
+            }
+        )
+        if entity_exists:
+            frappe.throw(
+                f"{'Folder' if self.is_group else 'File'} '{new_title}' already exists",
+                FileExistsError,
+            )
+
+        self.title = new_title
+        self.save()
+        return self
+
+    @frappe.whitelist()
+    def change_color(self, new_color):
+        """
+        Change color of a folder
+
+        :param new_color: New color selected for folder
+        :raises InvalidColor: If the color is not a hex value string
+        :return: DriveEntity doc once it's updated
+        """
+        return frappe.db.set_value(
+            "Drive Entity", self.name, "color", new_color, update_modified=False
+        )
+
+    @frappe.whitelist()
+    def set_general_access(self, read, write, everyone, public, share, share_name=None):
+        """
+        Set general sharing access for entity
+
+        :param new_access: Dict with new read and write value
+        """
+
+        if read:
+            if frappe.session.user == self.owner:
+                self.share(
+                    share_name=share_name,
+                    read=read,
+                    write=write,
+                    share=0,
+                    everyone=everyone,
+                    public=public,
+                )
+
+        else:
+            flags = {"ignore_permissions": True} if frappe.session.user == self.owner else None
+            self.unshare(user=None, user_type=None)
+
+    @frappe.whitelist()
+    def toggle_allow_comments(self, new_value):
+        """
+        Toggle allow comments for entity
+
+        """
+
+        self.db_set("allow_comments", new_value, commit=True, update_modified=False)
+        if self.is_group:
+            for child in self.get_children():
+                child.toggle_allow_comments(new_value)
+
+    @frappe.whitelist()
+    def toggle_allow_download(self, new_value):
+        """
+        Toggle allow download for entity
+
+        """
+        self.db_set("allow_download", new_value, commit=True, update_modified=False)
+        if self.is_group:
+            for child in self.get_children():
+                child.toggle_allow_download(new_value)
+
+    @frappe.whitelist()
+    def share(
+        self,
+        share_name=None,
+        user=None,
+        user_type="User",
+        read=1,
+        write=0,
+        share=0,
+        everyone=0,
+        public=0,
+        notify=0,
+    ):
+        """
+        Share this file or folder with the specified user.
+        If it has already been shared, update permissions.
+        Share defaults to one to let the non owner user unshare a file.
+
+        :param user: User with whom this is to be shared
+        :param write: 1 if write permission is to be granted. Defaults to 0
+        :param share: 1 if share permission is to be granted. Defaults to 0
+        :param notify: 1 if the user should be notified. Defaults to 1
+        """
+
+        if frappe.session.user != self.owner:
+            if not frappe.has_permission(
+                doctype="Drive Entity",
+                doc=self,
+                ptype="share",
+                user=frappe.session.user,
+            ):
+                frappe.throw(
+                    "Not permitted to share",
+                    frappe.PermissionError,
+                )
+
+        if user:
+            share_name = frappe.db.get_value(
+                "Drive DocShare",
+                {
+                    "user_name": user,
+                    "user_doctype": user_type,
+                    "share_name": self.name,
+                    "share_doctype": "Drive Entity",
+                },
+            )
+        if cint(public) or cint(everyone):
+            share_name = frappe.db.get_value(
+                "Drive DocShare",
+                {
+                    "share_name": self.name,
+                    "share_doctype": "Drive Entity",
+                    "user_name": None,
+                    "user_doctype": None,
+                },
+            )
+        if share_name:
+            doc = frappe.get_doc("Drive DocShare", share_name)
+
+        else:
+            doc = frappe.new_doc("Drive DocShare")
+            doc.update(
+                {
+                    "user_name": user,
+                    "user_doctype": user_type,
+                    "share_doctype": "Drive Entity",
+                    "share_name": self.name,
+                    "everyone": cint(everyone),
+                    "public": cint(public),
+                }
+            )
+
+        doc.update(
+            {
+                # always add read, since you are adding!
+                "read": 1,
+                "write": cint(write),
+                "share": cint(share),
+                "everyone": cint(everyone),
+                "public": cint(public),
+            }
+        )
+
+        if self.is_group:
+            for child in self.get_children():
+                child.share(
+                    user=user,
+                    user_type=user_type,
+                    read=read,
+                    write=write,
+                    share=share,
+                    everyone=everyone,
+                    public=public,
+                )
+
+        doc.save(ignore_permissions=True)
+
+    @frappe.whitelist()
+    def unshare(self, user, user_type="User"):
+        """Unshare this file or folder with the specified user
+
+        :param user: User or group with whom this is to be shared
+        :param user_type:
+        """
+
+        if user:
+            if user != self.owner and frappe.session.user != self.owner:
+                shared_parent = frappe.db.exists(
+                    "Drive DocShare",
+                    {
+                        "user_name": user,
+                        "user_doctype": user_type,
+                        "share_name": self.parent_drive_entity,
+                        "share_doctype": "Drive Entity",
+                    },
+                )
+                if shared_parent:
+                    return
+
+            share_name = frappe.db.get_value(
+                "Drive DocShare",
+                {
+                    "user_name": user,
+                    "user_doctype": user_type,
+                    "share_name": self.name,
+                    "share_doctype": "Drive Entity",
+                },
+            )
+        else:
+            share_name = frappe.db.get_value(
+                "Drive DocShare",
+                {
+                    "share_name": self.name,
+                    "share_doctype": "Drive Entity",
+                    "user_name": None,
+                    "user_doctype": None,
+                },
+            )
+
+        if share_name:
+            if frappe.session.user == user or frappe.session.user == self.owner:
+                frappe.db.delete("Drive DocShare", share_name)
+            else:
+                frappe.delete_doc("Drive DocShare", share_name, ignore_permissions=True)
+        if self.is_group:
+            for child in self.get_children():
+                child.unshare(user, user_type)
+ChatGPT
+
+The provided Python script is an implementation of a Frappe app for managing files and folders in a hierarchical structure. Here's an overview of the key functionalities and features implemented in the DriveEntity class:
+
+    Class Inheritance:
+        The class DriveEntity inherits from NestedSet, indicating that it supports a hierarchical structure using the Nested Set Model.
+
+    Methods and Hooks:
+        on_update: Overrides the on_update method to execute custom logic after updating a document.
+        before_save: Overrides the before_save method to execute custom logic before saving a document.
+        after_insert: Overrides the after_insert method to execute custom logic after inserting a new document.
+        on_trash: Overrides the on_trash method to execute custom logic before trashing a document.
+        after_delete: Overrides the after_delete method to execute custom logic after deleting a document.
+        on_rollback: Overrides the on_rollback method to execute custom logic on rollback.
+        inherit_permissions: Copies parent permissions to a new child entity.
+        move: Moves a file or folder to a new parent folder.
+        copy: Copies a file or folder along with its contents to a new parent folder.
+        rename: Renames a file or folder.
+        change_color: Changes the color of a folder.
+        set_general_access: Sets general sharing access for an entity.
+        toggle_allow_comments: Toggles the ability to allow comments for an entity.
+        toggle_allow_download: Toggles the ability to allow downloading for an entity.
+        share: Shares a file or folder with the specified user or group.
+        unshare: Unshares a file or folder with the specified user or group.
+
+    Whitelisted Methods:
+        Several methods are marked as @frappe.whitelist() to make them accessible via Frappe's RESTful API.
+
+    File Operations:
+        The script includes methods for moving, copying, renaming, and deleting files and folders, with appropriate checks and permissions.
+        It handles file operations such as deleting associated Drive Document, removing files, and deleting thumbnails.
+        It supports creating thumbnails for image and video files.
+
+    Sharing and Permissions:
+        The script provides methods for sharing and unsharing files and folders with specific users or groups.
+        It inherits permissions from parent entities.
+        It handles sharing access control, including read, write, and share permissions.
+
+    Color and Preferences:
+        The script allows changing the color of a folder.
+        It supports setting general access preferences, such as read and write access.
+
+    User Interface Interaction:
+        Methods like toggle_allow_comments and toggle_allow_download suggest interaction with user interface elements related to comments and download permissions.
+
+    Error Handling:
+        The script includes error handling for various scenarios, such as permission errors and file existence errors.
+
+    Asynchronous Tasks:
+        It enqueues thumbnail creation as an asynchronous task using frappe.enqueue.
+
+    Integration with Frappe Framework:
+        The script integrates with the Frappe framework, utilizing Frappe's ORM for database interactions, document creation, and other functionalities.
+
+Please note that the script assumes a working knowledge of the Frappe framework and its conventions. If you have specific questions or if there's anything specific you'd like to understand or modify in the script, feel free to ask!

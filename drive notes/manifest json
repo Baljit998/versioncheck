@@ -1,0 +1,25 @@
+The provided manifest.json file is a configuration file used for Progressive Web Apps (PWAs). It provides metadata about the web application, such as its name, description, icons, start URL, display mode, theme color, and more. Here's a breakdown of the key properties:
+
+
+
+
+
+    name: The full name of the web application ("Frappe Drive").
+
+    description: A brief description of the application.
+
+    short_name: A short name or nickname for the application ("Drive").
+
+    icons: An array of objects specifying different icon sizes and their properties. Each object includes the source (src), type, sizes, and purpose (in this case, "any maskable").
+
+    scope: Defines the navigation scope of the service worker.
+
+    start_url: The URL that should be opened when the application is launched. It includes a query parameter (?source=pwa).
+
+    display: Defines how the application should be displayed. In this case, it is set to "standalone," which means the app will look and feel like a standalone/native application.
+
+    theme_color: Specifies the color of the application's theme. This color is used for the browser's UI elements.
+
+    background_color: Specifies the background color of the application.
+
+This manifest.json file is crucial for enabling PWA features, such as the ability to install the web app on a user's device, customize the app's appearance on the home screen, and control how the app behaves when launched. It's part of the modern web development approach to create more engaging and app-like user experiences.

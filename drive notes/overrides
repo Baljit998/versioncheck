@@ -1,0 +1,137 @@
+Python script override.py in more detail.
+Import Statements
+
+python
+
+import frappe
+from drive.api.permissions import user_group_entity_access
+
+    This script imports the frappe module, which is commonly used in Frappe applications.
+    It also imports a specific function user_group_entity_access from drive.api.permissions.
+
+Function: user_has_permission
+
+python
+
+def user_has_permission(doc, ptype, user):
+    if not user:
+        user = frappe.session.user
+
+    This function is named user_has_permission and takes three parameters: doc (document object), ptype (permission type), and user (user ID).
+    If the user is not provided, it defaults to the currently logged-in user obtained from frappe.session.user.
+
+python
+
+    if doc.owner == user:
+        return
+
+    If the document owner is the same as the user, permission is automatically granted, and the function returns.
+
+python
+
+    if user != "Guest":
+        # ... logic for non-Guest users
+    else:
+        # ... logic for Guest users
+
+    The script then checks if the user is not a Guest. If so, it executes a set of conditions for non-Guest users; otherwise, it executes conditions specific to Guest users.
+
+Logic for Non-Guest Users
+
+python
+
+        user_access = frappe.db.get_value(
+            "Drive DocShare",
+            {
+                "share_doctype": "Drive Entity",
+                "share_name": doc.name,
+                "user_doctype": "User",
+                "user_name": frappe.session.user,
+            },
+            ["read", "write", "share"],
+            as_dict=1,
+        )
+
+    Retrieves values (read, write, share) from the "Drive DocShare" table based on certain conditions.
+
+python
+
+        if user_access:
+            if ptype == "share" and user_access["share"]:
+                return
+            if ptype == "write" and user_access["write"]:
+                return
+            if ptype == "read" and user_access["read"]:
+                return
+
+    Checks the retrieved user access and grants permission based on the specified permission type (ptype).
+
+python
+
+        group_access = user_group_entity_access(doc.name)
+        if group_access:
+            # ... similar logic for group access
+
+    Calls a function user_group_entity_access to get group-specific access and performs similar checks.
+
+python
+
+        general_access = frappe.db.get_value(
+            "Drive DocShare",
+            {"share_name": doc.name, "everyone": 1},
+            ["read", "write"],
+            as_dict=1,
+        )
+
+    Checks for general access granted to everyone.
+
+python
+
+        public_access = frappe.db.get_value(
+            "Drive DocShare",
+            {"share_name": doc.name, "public": 1},
+            ["read", "write"],
+            as_dict=1,
+        )
+
+    Checks for public access.
+
+python
+
+        # ... Additional logic to grant or deny access based on different conditions
+
+        return False
+
+    If none of the conditions are met, the function returns False to indicate that permission is denied.
+
+Logic for Guest Users
+
+python
+
+    public_access = frappe.db.get_value(
+        "Drive DocShare",
+        {"share_name": doc.name, "public": 1},
+        ["read", "write"],
+        as_dict=1,
+    )
+
+    For Guest users, it checks for public access.
+
+python
+
+    if public_access:
+        if ptype == "write" and public_access["write"]:
+            return
+        if ptype == "read" and public_access["read"]:
+            return
+
+    Grants permission based on public access conditions.
+
+Summary
+
+    The script defines a function that checks whether a user has permission to perform a specific action (read, write, share) on a document.
+    It considers various conditions, including user-specific access, group access, general access, and public access.
+    The logic is tailored for both non-Guest and Guest users.
+    The function returns early if permission is granted or returns False if permission is denied.
+
+This script is an integral part of the application's permission system, providing custom logic for document access control based on the sharing settings and user roles.

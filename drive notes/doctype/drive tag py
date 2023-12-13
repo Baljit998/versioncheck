@@ -1,0 +1,42 @@
+# Copyright (c) 2023, Frappe Technologies Pvt. Ltd. and contributors
+# For license information, please see license.txt
+
+import frappe
+from frappe.model.document import Document
+from drive.api.tags import remove_tag
+
+
+class DriveTag(Document):
+    def on_trash(self):
+        drive_entities = frappe.db.get_list(
+            "Drive Entity", filters={"owner": self.owner}, pluck="name"
+        )
+
+        for entity in drive_entities:
+            remove_tag(entity, self.name)
+The provided Python script (`drivetag.py`) is associated with the "Drive Tag" DocType in Frappe. It includes a method that performs an action when an instance of this DocType is deleted (moved to trash). Let's break down the key elements:
+
+1. **File Header:**
+   - The file includes copyright and license information.
+
+2. **Import Statements:**
+   - `import frappe`: Imports the Frappe framework.
+   - `from frappe.model.document import Document`: Imports the base Document class from Frappe.
+
+3. **Class Definition:**
+   - `class DriveTag(Document):`: Defines a class named `DriveTag` that inherits from `Document`, representing instances of the "Drive Tag" DocType.
+
+4. **on_trash Method:**
+   - `def on_trash(self):`: Defines a method named `on_trash` that will be executed when an instance of "Drive Tag" is moved to the trash.
+
+   - `drive_entities = frappe.db.get_list(...)`: Retrieves a list of "Drive Entity" documents owned by the user who owns the current instance of the "Drive Tag." It fetches the names of these entities.
+
+   - `for entity in drive_entities:`: Iterates through the list of "Drive Entity" names.
+
+   - `remove_tag(entity, self.name)`: Calls the `remove_tag` function from `drive.api.tags` module, passing the "Drive Entity" name (`entity`) and the name of the "Drive Tag" being deleted (`self.name`). This function presumably handles the removal of the tag association from the specified "Drive Entity."
+
+In summary, the `on_trash` method ensures that when a "Drive Tag" is moved to the trash, the associated tag references are removed from all "Drive Entity" documents owned by the same user.
+
+If you have any specific questions or need further clarification, feel free to ask!            
+            
+

@@ -1,0 +1,43 @@
+The DistributedLock class in distributedlock.py is a Python class that provides a distributed locking mechanism using Redis. This mechanism helps coordinate access to a shared resource (in this case, a file) among multiple processes or instances. The class supports both exclusive (write) and non-exclusive (read) locks. Let's break down its key methods and functionality:
+Initialization
+
+    __init__(self, path, exclusive, ttl=60): Constructor method to initialize the lock instance.
+        path: The path to the resource or file being locked.
+        exclusive: Boolean indicating whether it's an exclusive (write) lock or not (read lock).
+        ttl: Time-to-live for the lock in seconds (default is 60 seconds).
+
+Lock Acquisition and Release
+
+    acquire_write_lock(self): Acquires an exclusive (write) lock. Raises FileLockedError if the lock is not acquired.
+    release_write_lock(self): Releases the exclusive (write) lock.
+    acquire_read_lock(self): Acquires a non-exclusive (read) lock. Raises FileLockedError if the lock is not acquired.
+    release_read_lock(self): Releases the non-exclusive (read) lock.
+
+Context Manager Support
+
+    __enter__(self): Allows the class to be used as a context manager. Acquires the lock when entering the context.
+    __exit__(self, exc_type, exc_value, traceback): Releases the lock when exiting the context.
+
+Internal Methods
+
+    _add(self, key, value, ttl): Adds a key-value pair to the cache with an expiration time.
+    _increment(self, key, ttl): Atomically increments the value associated with the key. Returns False if the increment fails.
+    _decrement(self, key): Atomically decrements the value associated with the key. Returns False if the decrement fails.
+    _check_and_set(self, key, expected_val, new_val, ttl): Atomically sets the value of the key if the current value matches the expected value.
+    _check_and_delete(self, key, expected_val): Atomically deletes the key if the current value matches the expected value.
+
+Usage as a Context Manager
+
+python
+
+with DistributedLock(path="/some/resource", exclusive=True) as lock:
+    # Code inside this block has acquired the write lock
+    # Do operations on the locked resource
+# The write lock is released upon exiting the block
+
+Notes
+
+    The class uses the frappe.cache() object to interact with the Redis cache.
+    Redis is used to implement atomic operations ensuring a robust distributed locking mechanism.
+
+This class is designed to be used in a scenario where multiple processes or instances need to coordinate access to shared resources in a distributed environment. It prevents conflicts by allowing only one process to hold the lock at a time.

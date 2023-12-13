@@ -1,0 +1,84 @@
+this is drive favourate.json
+{
+  "actions": [],
+  "autoname": "autoincrement",
+  "creation": "2022-11-25 11:51:10.412352",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": ["user", "entity"],
+  "fields": [
+    {
+      "fieldname": "user",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "User",
+      "options": "User",
+      "reqd": 1
+    },
+    {
+      "fieldname": "entity",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Drive Entity",
+      "options": "Drive Entity",
+      "reqd": 1
+    }
+  ],
+  "links": [],
+  "modified": "2023-08-23 17:37:01.709815",
+  "modified_by": "Administrator",
+  "module": "Drive",
+  "name": "Drive Favourite",
+  "naming_rule": "Autoincrement",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "export": 1,
+      "read": 1,
+      "role": "Drive User",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "export": 1,
+      "read": 1,
+      "role": "Drive Admin",
+      "share": 1,
+      "write": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": []
+}
+The provided JSON configuration represents the metadata for a DocType in Frappe, specifically for a "Drive Favourite" document type. Here's a breakdown of the key components and properties defined in this configuration:
+
+1. **Basic Information:**
+   - **name:** "Drive Favourite"
+   - **module:** "Drive"
+   - **owner:** "Administrator"
+   - **creation:** Date and time of creation
+   - **modified:** Date and time of the last modification
+   - **modified_by:** "Administrator"
+   - **autoname:** "Autoincrement"
+   - **sort_field:** "modified"
+   - **sort_order:** "DESC"
+
+2. **Fields:**
+   - **user:** Link field referencing the "User" document type. It represents the user who marked the entity as a favorite.
+   - **entity:** Link field referencing the "Drive Entity" document type. It represents the entity marked as a favorite.
+
+3. **Permissions:**
+   - Two sets of permissions are defined for roles "Drive User" and "Drive Admin," allowing them to create, delete, export, read, share, and write "Drive Favourite" documents.
+
+4. **Actions, Links, and States:**
+   - Actions, links, and states are not defined in this configuration.
+
+5. **Naming Rule:**
+   - The naming rule is set to "Autoincrement," indicating that the names of instances will be automatically incremented.
+
+This configuration defines how instances of "Drive Favourite" documents are structured, representing entities marked as favorites by users in the "Drive" module. If you have any specific questions or if there's anything else you'd like to understand, feel free to ask!
