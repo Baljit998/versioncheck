@@ -1,0 +1,194 @@
+this drive docshare.py
+{
+  "actions": [],
+  "autoname": "hash",
+  "creation": "2023-08-28 12:03:29.057225",
+  "default_view": "List",
+  "description": "Internal record of drive entity shares",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "share_doctype",
+    "share_name",
+    "user_doctype",
+    "user_name",
+    "read",
+    "write",
+    "share",
+    "everyone",
+    "public",
+    "notify"
+  ],
+  "fields": [
+    {
+      "default": "0",
+      "fieldname": "read",
+      "fieldtype": "Check",
+      "label": "Read"
+    },
+    {
+      "default": "0",
+      "fieldname": "write",
+      "fieldtype": "Check",
+      "label": "Write"
+    },
+    {
+      "default": "0",
+      "fieldname": "share",
+      "fieldtype": "Check",
+      "label": "Share"
+    },
+    {
+      "fieldname": "share_doctype",
+      "fieldtype": "Link",
+      "label": "Document Type",
+      "options": "DocType",
+      "reqd": 1
+    },
+    {
+      "fieldname": "share_name",
+      "fieldtype": "Dynamic Link",
+      "in_list_view": 1,
+      "label": "Document Name",
+      "options": "share_doctype",
+      "reqd": 1
+    },
+    {
+      "default": "0",
+      "fieldname": "everyone",
+      "fieldtype": "Check",
+      "label": "Everyone"
+    },
+    {
+      "default": "0",
+      "fieldname": "public",
+      "fieldtype": "Check",
+      "label": "Public"
+    },
+    {
+      "default": "0",
+      "fieldname": "notify",
+      "fieldtype": "Check",
+      "label": "Notify"
+    },
+    {
+      "fieldname": "user_doctype",
+      "fieldtype": "Link",
+      "label": "User Type",
+      "options": "DocType"
+    },
+    {
+      "fieldname": "user_name",
+      "fieldtype": "Dynamic Link",
+      "label": "User Name",
+      "options": "user_doctype"
+    }
+  ],
+  "in_create": 1,
+  "links": [],
+  "modified": "2023-10-13 13:35:49.260077",
+  "modified_by": "Administrator",
+  "module": "Drive",
+  "name": "Drive DocShare",
+  "naming_rule": "Random",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Drive User",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Drive Admin",
+      "share": 1,
+      "write": 1
+    }
+  ],
+  "read_only": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}
+ChatGPT
+
+The provided JSON represents the DocType definition for "Drive DocShare" in Frappe. Here's an overview of the key components:
+DocType Metadata:
+
+    autoname: "hash" - The autoname field is set to "hash," indicating that document names will be generated automatically using a hash.
+
+    creation: "2023-08-28 12:03:29.057225" - The timestamp when the DocType was created.
+
+    default_view: "List" - The default view for this DocType is set to "List."
+
+    description: "Internal record of drive entity shares" - A brief description of the purpose of this DocType.
+
+    editable_grid: 1 - Indicates that an editable grid is enabled for this DocType.
+
+    engine: "InnoDB" - The storage engine used for the underlying database table.
+
+    field_order: An ordered list of fieldnames specifying their display order in the form.
+
+    fields: Descriptions of individual fields in the DocType.
+        "read," "write," "share," "everyone," "public," and "notify" are boolean fields with default values and represent various permissions and sharing options.
+        "share_doctype" and "share_name" are linked fields referring to the DocType and Document Name being shared.
+        "user_doctype" and "user_name" are linked fields specifying the type and name of the user.
+
+    in_create: 1 - Indicates that this DocType is intended to be shown in the "Create" menu.
+
+    modified: "2023-10-13 13:35:49.260077" - The timestamp of the last modification.
+
+    modified_by: "Administrator" - The user who last modified the DocType.
+
+    module: "Drive" - Specifies the module to which this DocType belongs.
+
+    name: "Drive DocShare" - The name of the DocType.
+
+    naming_rule: "Random" - Specifies the naming rule for generating document names.
+
+    owner: "Administrator" - The user who owns this DocType.
+
+    permissions: Define role-based permissions for different roles like "System Manager," "Drive User," and "Drive Admin."
+
+    read_only: 1 - Indicates that the DocType is read-only.
+
+    sort_field: "modified" - Specifies the field to be used for sorting when displaying records.
+
+    sort_order: "DESC" - The sorting order, in this case, descending.
+
+    track_changes: 1 - Indicates that changes to documents of this type will be tracked.
+
+Fields:
+
+The DocType has various fields that represent permissions, sharing options, and metadata associated with sharing documents/entities in the system.
+
+This DocType seems to be related to managing permissions and sharing settings for entities in a document management system, particularly within the context of the "Drive" module. It includes fields for specifying read, write, share permissions, and other sharing-related options. The permissions section defines different levels of access for different roles.
+
+Please let me know if you have specific questions about certain aspects of this DocType.
